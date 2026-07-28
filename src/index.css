@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #e0e7ff;
+  --color-primary: #312e81;
+  --color-secondary: #4338ca;
+  --color-text-main: #1e1b4b;
+
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+:root {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: #1e1b4b;
+  background-color: #e0e7ff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #e0e7ff;
+  color: #1e1b4b;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Mobile Safe Area Helpers */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* Silk System Neumorphic Utilities */
+.silk-convex,
+.neo-extruded {
+  background-color: #e0e7ff;
+  box-shadow: 8px 8px 16px #beccf2, -8px -8px 16px #ffffff;
+}
+
+.silk-concave,
+.neo-pressed {
+  background-color: #e0e7ff;
+  box-shadow: inset 4px 4px 8px #beccf2, inset -4px -4px 8px #ffffff;
+}
+
+.silk-convex-pressed {
+  box-shadow: inset 2px 2px 5px #becadf, inset -2px -2px 5px #ffffff;
+}
+
+/* Smooth interactive helpers */
+.neo-button {
+  background-color: #e0e7ff;
+  box-shadow: 6px 6px 12px #beccf2, -6px -6px 12px #ffffff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neo-button:hover {
+  box-shadow: 8px 8px 16px #beccf2, -8px -8px 16px #ffffff;
+}
+
+.neo-button:active {
+  box-shadow: inset 3px 3px 6px #beccf2, inset -3px -3px 6px #ffffff;
+}
+
+/* Font utility helpers */
+.font-playfair {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Neumorphic Form Controls & Mobile Input Sizing */
+.silk-input {
+  background-color: #e0e7ff;
+  box-shadow: inset 3px 3px 6px #beccf2, inset -3px -3px 6px #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+  color: #1e1b4b;
+}
+
+.silk-input:focus {
+  box-shadow: inset 4px 4px 8px #beccf2, inset -4px -4px 8px #ffffff, 0 0 0 2px rgba(67, 56, 202, 0.3);
+}
+
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="date"],
+  input[type="number"],
+  textarea,
+  select,
+  .silk-input {
+    font-size: 16px !important;
+  }
+}
+
+.silk-button-primary {
+  background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+  color: white;
+  box-shadow: 6px 6px 14px #beccf2, -6px -6px 14px #ffffff;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.silk-button-primary:hover {
+  box-shadow: 8px 8px 18px #beccf2, -8px -8px 18px #ffffff;
+  transform: translateY(-1px);
+}
+
+.silk-button-primary:active {
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.4);
+  transform: translateY(0);
+}
+
+/* Silk Badge & Story Overlays */
+.silk-badge {
+  background-color: rgba(224, 231, 255, 0.85);
+  backdrop-filter: blur(8px);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.25), -2px -2px 6px rgba(255, 255, 255, 0.4);
+  color: #312e81;
+}
+
+.story-gradient {
+  background: linear-gradient(to top, rgba(30, 27, 75, 0.95) 0%, rgba(30, 27, 75, 0.65) 45%, rgba(30, 27, 75, 0) 100%);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
