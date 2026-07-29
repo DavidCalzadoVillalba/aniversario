@@ -83,7 +83,6 @@ export default function MainLayout() {
 
           {currentTab === 'gallery' && (
             <GalleryView
-              onSelectMemory={handleSelectStoryOrMemory}
               onNavigateToUpload={() => setCurrentTab('upload')}
               onModalStateChange={(isOpen) => setIsGalleryModalOpen(isOpen)}
             />
