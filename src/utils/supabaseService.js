@@ -443,22 +443,26 @@ export async function createHighlight(newHighlight) {
   const rawCover = typeof newHighlight === 'object' ? (newHighlight.cover || newHighlight.image) : null;
   const coverUrl = rawCover || '/defecto.webp';
 
-  const payload = {
-    title: titleInput.trim(),
-    subtitle: subtitleInput ? subtitleInput.trim() : '',
+  let savedHighlight = {
+    title: titleInput,
+    subtitle: subtitleInput || '',
     cover: coverUrl || '/defecto.webp',
     image: coverUrl || '/defecto.webp',
-  };
-
-  let savedHighlight = {
-    ...payload,
     id: 'hl_' + Date.now(),
     isFeatured: false,
   };
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data, error } = await supabase.from('highlights').insert([payload]).select();
+      const { data, error } = await supabase
+        .from('highlights')
+        .insert([{
+          title: titleInput,
+          subtitle: subtitleInput || '',
+          cover: coverUrl || '/defecto.webp',
+          image: coverUrl || '/defecto.webp'
+        }])
+        .select();
 
       if (error) {
         console.warn('Advertencia al insertar destacada en Supabase:', error.message);
