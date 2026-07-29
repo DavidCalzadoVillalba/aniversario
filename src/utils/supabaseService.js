@@ -277,7 +277,7 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
 
 /**
  * Fetches all highlights from Supabase table 'highlights' or localStorage fallback.
- * Maps and returns both `image` and `cover` properties to avoid missing column errors.
+ * Uses .select('*') to avoid schema errors and maps `coverUrl = item.cover || item.image || '/defecto.webp'`.
  */
 export async function fetchHighlightsFromCloud() {
   if (isSupabaseConfigured && supabase) {
@@ -291,12 +291,12 @@ export async function fetchHighlightsFromCloud() {
         console.warn('Advertencia al consultar Supabase highlights (fallback local):', error.message);
       } else if (Array.isArray(data)) {
         const formatted = data.map((item) => {
-          const img = item.image || item.cover || '/defecto.webp';
+          const coverUrl = item.cover || item.image || '/defecto.webp';
           return {
             id: item.id,
             title: item.title,
-            image: img,
-            cover: img,
+            cover: coverUrl,
+            image: coverUrl,
             subtitle: item.subtitle || '',
             isFeatured: Boolean(item.is_featured),
           };
@@ -312,11 +312,11 @@ export async function fetchHighlightsFromCloud() {
 
   const localHighlights = getHighlights();
   return localHighlights.map((h) => {
-    const img = h.image || h.cover || '/defecto.webp';
+    const coverUrl = h.cover || h.image || '/defecto.webp';
     return {
       ...h,
-      image: img,
-      cover: img,
+      cover: coverUrl,
+      image: coverUrl,
     };
   });
 }
@@ -326,20 +326,20 @@ export const fetchHighlights = fetchHighlightsFromCloud;
 
 /**
  * Saves or updates a highlight in Supabase table 'highlights' and localStorage.
- * Always sends both `image` and `cover` fields with the same URL or '/defecto.webp'.
+ * Always sends valid `title`, `cover`, and `image` fields.
  */
 export async function saveHighlightToCloud(highlight, oldTitle) {
   let savedHighlight = { ...highlight };
-  const coverUrl = highlight.image || highlight.cover || '/defecto.webp';
+  const rawCover = highlight.cover || highlight.image;
+  const coverUrl = rawCover || '/defecto.webp';
 
-  savedHighlight.image = coverUrl;
   savedHighlight.cover = coverUrl;
+  savedHighlight.image = coverUrl;
 
   if (isSupabaseConfigured && supabase) {
     try {
       const isClientTempId = !highlight.id || String(highlight.id).startsWith('hl_');
 
-      // Generate friendly slug ID if no established ID exists
       const friendlyId = !isClientTempId && highlight.id
         ? highlight.id
         : highlight.title
@@ -354,8 +354,8 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
 
       const dataToUpsert = {
         title: highlight.title,
-        image: coverUrl,
-        cover: coverUrl,
+        cover: coverUrl || '/defecto.webp',
+        image: coverUrl || '/defecto.webp',
         subtitle: highlight.subtitle || 'Destacada',
         is_featured: Boolean(highlight.isFeatured),
       };
@@ -364,22 +364,16 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
         dataToUpsert.id = friendlyId;
       }
 
-      let res;
-      if (isClientTempId && !friendlyId) {
-        res = await supabase.from('highlights').insert([dataToUpsert]).select();
-      } else {
-        res = await supabase.from('highlights').upsert(dataToUpsert).select();
-      }
+      let res = await supabase.from('highlights').upsert(dataToUpsert).select();
 
       if (res.error) {
         console.warn('Advertencia al guardar destacada en Supabase:', res.error.message);
-        // Fallback: try inserting without specifying schema-sensitive image/cover if schema cache fails
         if (res.error.message?.includes('column')) {
           try {
             const fallbackData = {
               title: highlight.title,
-              subtitle: highlight.subtitle || 'Destacada',
-              is_featured: Boolean(highlight.isFeatured),
+              cover: coverUrl || '/defecto.webp',
+              image: coverUrl || '/defecto.webp',
             };
             if (friendlyId) fallbackData.id = friendlyId;
             res = await supabase.from('highlights').upsert(fallbackData).select();
@@ -391,12 +385,12 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
 
       if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
         const cloudRecord = res.data[0];
-        const recordImg = cloudRecord.image || cloudRecord.cover || coverUrl;
+        const recordImg = cloudRecord.cover || cloudRecord.image || coverUrl;
         savedHighlight = {
           id: cloudRecord.id || friendlyId || savedHighlight.id,
           title: cloudRecord.title || savedHighlight.title,
-          image: recordImg,
           cover: recordImg,
+          image: recordImg,
           subtitle: cloudRecord.subtitle || savedHighlight.subtitle,
           isFeatured: Boolean(cloudRecord.is_featured),
         };
@@ -404,7 +398,6 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
         savedHighlight.id = friendlyId;
       }
 
-      // If title changed, update memories in Supabase that had the old category title
       if (oldTitle && oldTitle !== highlight.title) {
         const { data: memories } = await supabase.from('memories').select('*');
         if (Array.isArray(memories)) {
@@ -432,7 +425,6 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
     }
   }
 
-  // Update localStorage cache and dispatch event
   const current = getHighlights();
   const filtered = current.filter((h) => h.id !== highlight.id && h.id !== savedHighlight.id);
   saveHighlights([savedHighlight, ...filtered]);
@@ -443,32 +435,35 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
 
 /**
  * Creates a new highlight in Supabase and localStorage.
- * Generates a friendly text ID in lowercase without accents or spaces,
- * assigning default cover '/defecto.webp' if no image provided.
+ * Inserts valid object: { title, cover, image } with fallback '/defecto.webp'.
  */
 export async function createHighlight(newHighlight) {
-  const title = newHighlight.title ? newHighlight.title.trim() : '';
-  const friendlyId = newHighlight.id || (title
-    ? title
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-    : undefined);
+  const titleInput = typeof newHighlight === 'string' ? newHighlight : (newHighlight?.title || '');
+  const rawCover = typeof newHighlight === 'object' ? (newHighlight.cover || newHighlight.image) : null;
+  const coverUrl = rawCover || '/defecto.webp';
 
-  const coverUrl = newHighlight.image || newHighlight.cover || '/defecto.webp';
+  const friendlyId = typeof newHighlight === 'object' && newHighlight.id
+    ? newHighlight.id
+    : titleInput
+      ? titleInput
+          .toLowerCase()
+          .trim()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+      : undefined;
 
-  const itemToSave = {
-    ...newHighlight,
+  const payload = {
     id: friendlyId,
-    title: title,
-    image: coverUrl,
-    cover: coverUrl,
-    subtitle: newHighlight.subtitle ? newHighlight.subtitle.trim() : 'Destacada',
+    title: titleInput.trim(),
+    cover: coverUrl || '/defecto.webp',
+    image: coverUrl || '/defecto.webp',
+    subtitle: (typeof newHighlight === 'object' && newHighlight.subtitle) ? newHighlight.subtitle.trim() : 'Destacada',
+    isFeatured: typeof newHighlight === 'object' ? Boolean(newHighlight.isFeatured) : false,
   };
 
-  return await saveHighlightToCloud(itemToSave);
+  return await saveHighlightToCloud(payload);
 }
 
 /**
