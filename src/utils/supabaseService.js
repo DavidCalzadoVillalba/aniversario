@@ -276,6 +276,16 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
 }
 
 /**
+ * Sanitizes image URLs to convert legacy '/defecto.webp' to '/images/defecto.webp'.
+ */
+export function sanitizeImageUrl(url) {
+  if (!url || url === '/defecto.webp' || url === 'defecto.webp') {
+    return '/images/defecto.webp';
+  }
+  return url;
+}
+
+/**
  * Fetches highlights from Supabase or returns a safe fallback array.
  */
 export const getHighlights = async () => {
@@ -290,7 +300,7 @@ export const getHighlights = async () => {
       }
 
       const formatted = data.map((item) => {
-        const coverUrl = item.cover || item.image || '/images/defecto.webp';
+        const coverUrl = sanitizeImageUrl(item.cover || item.image);
         return {
           id: item.id,
           title: item.title,
