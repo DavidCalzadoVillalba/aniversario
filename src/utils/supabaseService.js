@@ -286,7 +286,14 @@ export async function getHighlights() {
 
       if (error) {
         console.warn('Advertencia al consultar Supabase highlights:', error.message);
-      } else if (Array.isArray(data)) {
+        const localHighlights = getLocalHighlights() || [];
+        return localHighlights.map((h) => {
+          const coverUrl = h.cover || h.image || '/defecto.webp';
+          return { ...h, cover: coverUrl, image: coverUrl };
+        });
+      }
+
+      if (Array.isArray(data)) {
         const formatted = data.map((item) => {
           const coverUrl = item.cover || item.image || '/defecto.webp';
           return {
@@ -307,7 +314,7 @@ export async function getHighlights() {
     }
   }
 
-  const localHighlights = getLocalHighlights();
+  const localHighlights = getLocalHighlights() || [];
   return localHighlights.map((h) => {
     const coverUrl = h.cover || h.image || '/defecto.webp';
     return {
@@ -423,7 +430,7 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
     }
   }
 
-  const current = getLocalHighlights();
+  const current = getLocalHighlights() || [];
   const filtered = current.filter((h) => h.id !== highlight.id && h.id !== savedHighlight.id);
   saveHighlights([savedHighlight, ...filtered]);
   window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
@@ -441,11 +448,15 @@ export async function createHighlight(newHighlight) {
   const rawCover = typeof newHighlight === 'object' ? (newHighlight.cover || newHighlight.image) : null;
   const coverUrl = rawCover || '/defecto.webp';
 
-  let savedHighlight = {
+  const payload = {
     title: titleInput.trim(),
     subtitle: subtitleInput ? subtitleInput.trim() : '',
     cover: coverUrl || '/defecto.webp',
-    image: coverUrl || '/defecto.webp',
+    image: coverUrl || '/defecto.webp'
+  };
+
+  let savedHighlight = {
+    ...payload,
     id: 'hl_' + Date.now(),
     isFeatured: false,
   };
@@ -454,14 +465,7 @@ export async function createHighlight(newHighlight) {
     try {
       const { data, error } = await supabase
         .from('highlights')
-        .insert([
-          {
-            title: titleInput.trim(),
-            subtitle: subtitleInput ? subtitleInput.trim() : '',
-            cover: coverUrl || '/defecto.webp',
-            image: coverUrl || '/defecto.webp'
-          }
-        ])
+        .insert([payload])
         .select();
 
       if (error) {
@@ -483,7 +487,7 @@ export async function createHighlight(newHighlight) {
     }
   }
 
-  const current = getLocalHighlights();
+  const current = getLocalHighlights() || [];
   saveHighlights([savedHighlight, ...current]);
   window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
 
