@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import { getHighlights, saveHighlights } from './highlightsManager';
+import { getHighlights as getLocalHighlights, saveHighlights } from './highlightsManager';
 
 export const MEMORIES_STORAGE_KEY = 'eternal_muse_memories';
 export const HIGHLIGHTS_STORAGE_KEY = 'gorditos_highlights';
@@ -277,18 +277,15 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
 
 /**
  * Fetches all highlights from Supabase table 'highlights' or localStorage fallback.
- * Uses .select('*') to avoid schema errors and maps `coverUrl = item.cover || item.image || '/defecto.webp'`.
+ * Performs query: const { data, error } = await supabase.from('highlights').select('*');
  */
-export async function fetchHighlightsFromCloud() {
+export async function getHighlights() {
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data, error } = await supabase
-        .from('highlights')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('highlights').select('*');
 
       if (error) {
-        console.warn('Advertencia al consultar Supabase highlights (fallback local):', error.message);
+        console.warn('Advertencia al consultar Supabase highlights:', error.message);
       } else if (Array.isArray(data)) {
         const formatted = data.map((item) => {
           const coverUrl = item.cover || item.image || '/defecto.webp';
@@ -310,7 +307,7 @@ export async function fetchHighlightsFromCloud() {
     }
   }
 
-  const localHighlights = getHighlights();
+  const localHighlights = getLocalHighlights();
   return localHighlights.map((h) => {
     const coverUrl = h.cover || h.image || '/defecto.webp';
     return {
@@ -321,8 +318,9 @@ export async function fetchHighlightsFromCloud() {
   });
 }
 
-// Alias for fetchHighlightsFromCloud
-export const fetchHighlights = fetchHighlightsFromCloud;
+// Aliases for getHighlights
+export const fetchHighlightsFromCloud = getHighlights;
+export const fetchHighlights = getHighlights;
 
 /**
  * Saves or updates a highlight in Supabase table 'highlights' and localStorage.
@@ -425,7 +423,7 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
     }
   }
 
-  const current = getHighlights();
+  const current = getLocalHighlights();
   const filtered = current.filter((h) => h.id !== highlight.id && h.id !== savedHighlight.id);
   saveHighlights([savedHighlight, ...filtered]);
   window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
@@ -444,8 +442,8 @@ export async function createHighlight(newHighlight) {
   const coverUrl = rawCover || '/defecto.webp';
 
   let savedHighlight = {
-    title: titleInput,
-    subtitle: subtitleInput || '',
+    title: titleInput.trim(),
+    subtitle: subtitleInput ? subtitleInput.trim() : '',
     cover: coverUrl || '/defecto.webp',
     image: coverUrl || '/defecto.webp',
     id: 'hl_' + Date.now(),
@@ -457,8 +455,8 @@ export async function createHighlight(newHighlight) {
       const { data, error } = await supabase
         .from('highlights')
         .insert([{
-          title: titleInput,
-          subtitle: subtitleInput || '',
+          title: titleInput.trim(),
+          subtitle: subtitleInput ? subtitleInput.trim() : '',
           cover: coverUrl || '/defecto.webp',
           image: coverUrl || '/defecto.webp'
         }])
@@ -483,7 +481,7 @@ export async function createHighlight(newHighlight) {
     }
   }
 
-  const current = getHighlights();
+  const current = getLocalHighlights();
   saveHighlights([savedHighlight, ...current]);
   window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
 
