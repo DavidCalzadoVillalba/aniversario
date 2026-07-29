@@ -69,7 +69,7 @@ export default function HighlightsManagerModal({ onClose }) {
     setEditingId(item.id);
     setTitle(item.title);
     setSubtitle(item.subtitle || '');
-    setCoverImage(item.image || item.cover || '/defecto.webp');
+    setCoverImage(item.image || item.cover || '/images/defecto.webp');
     setErrorMsg(null);
   };
 
@@ -93,7 +93,7 @@ export default function HighlightsManagerModal({ onClose }) {
     }
 
     if (!finalImage || finalImage.trim() === '') {
-      finalImage = '/defecto.webp';
+      finalImage = '/images/defecto.webp';
     }
 
     const editingItem = highlights.find((h) => h.id === editingId);
@@ -139,7 +139,7 @@ export default function HighlightsManagerModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 bg-[#1e1b4b]/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn select-none">
       <div className="silk-convex max-w-xl w-full rounded-3xl p-5 sm:p-8 relative max-h-[90dvh] overflow-y-auto no-scrollbar space-y-5 sm:space-y-6">
-        
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -210,10 +210,10 @@ export default function HighlightsManagerModal({ onClose }) {
                 title="Seleccionar portada"
               >
                 <img
-                  src={coverImage || '/defecto.webp'}
+                  src={coverImage || '/images/defecto.webp'}
                   alt="Portada"
                   onError={(e) => {
-                    e.target.src = '/defecto.webp';
+                    e.target.src = '/images/defecto.webp';
                   }}
                   className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform"
                 />
@@ -271,7 +271,7 @@ export default function HighlightsManagerModal({ onClose }) {
 
           <div className="space-y-2.5 max-h-56 overflow-y-auto no-scrollbar pr-1 w-full">
             {highlights.map((item) => {
-              const coverImage = item.cover || item.image || '/defecto.webp';
+              const coverImage = item.cover || item.image || '/images/defecto.webp';
               return (
                 <div
                   key={item.id}
@@ -283,43 +283,43 @@ export default function HighlightsManagerModal({ onClose }) {
                         src={coverImage}
                         alt={item.title}
                         onError={(e) => {
-                          e.target.src = '/defecto.webp';
+                          e.target.src = '/images/defecto.webp';
                         }}
                         className="w-full h-full object-cover rounded-full"
                       />
                     </div>
 
-                  <div className="truncate">
-                    <h4 className="font-playfair italic text-sm sm:text-base font-bold text-[#312e81] truncate">
-                      {item.title}
-                    </h4>
-                    <p className="text-[11px] text-[#1e1b4b]/70 font-jakarta truncate">
-                      {item.subtitle || 'Destacada'}
-                    </p>
+                    <div className="truncate">
+                      <h4 className="font-playfair italic text-sm sm:text-base font-bold text-[#312e81] truncate">
+                        {item.title}
+                      </h4>
+                      <p className="text-[11px] text-[#1e1b4b]/70 font-jakarta truncate">
+                        {item.subtitle || 'Destacada'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="p-2 rounded-xl silk-convex text-[#4338ca] hover:scale-110 transition-transform cursor-pointer"
+                      title="Editar destacada"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(item.id, item.title)}
+                      className="p-2 rounded-xl silk-convex text-red-600 hover:scale-110 transition-transform cursor-pointer"
+                      title="Eliminar destacada"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center space-x-2 shrink-0">
-                  <button
-                    onClick={() => startEdit(item)}
-                    className="p-2 rounded-xl silk-convex text-[#4338ca] hover:scale-110 transition-transform cursor-pointer"
-                    title="Editar destacada"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(item.id, item.title)}
-                    className="p-2 rounded-xl silk-convex text-red-600 hover:scale-110 transition-transform cursor-pointer"
-                    title="Eliminar destacada"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
 

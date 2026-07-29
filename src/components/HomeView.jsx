@@ -76,7 +76,7 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
         {/* Scroll Horizontal Limpio sin barra de desplazamiento */}
         <div className="flex items-center space-x-5 overflow-x-auto no-scrollbar py-3 px-1">
           {stories.map((story) => {
-            const coverImage = story.cover || story.image || '/defecto.webp';
+            const coverImage = story.cover || story.image || '/images/defecto.webp';
             return (
               <button
                 key={story.id}
@@ -95,7 +95,7 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
                       src={coverImage}
                       alt={story.title}
                       onError={(e) => {
-                        e.target.src = '/defecto.webp';
+                        e.target.src = '/images/defecto.webp';
                       }}
                       className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
                     />

@@ -279,7 +279,7 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
  * Fetches highlights from Supabase or returns a safe fallback array.
  */
 export const getHighlights = async () => {
-  const fallbackList = [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp', subtitle: 'Nuestros recuerdos' }];
+  const fallbackList = [{ id: 'momentos', title: 'Momentos de amor', cover: '/images/defecto.webp', image: '/images/defecto.webp', subtitle: 'Nuestros recuerdos' }];
 
   if (isSupabaseConfigured && supabase) {
     try {
@@ -290,7 +290,7 @@ export const getHighlights = async () => {
       }
 
       const formatted = data.map((item) => {
-        const coverUrl = item.cover || item.image || '/defecto.webp';
+        const coverUrl = item.cover || item.image || '/images/defecto.webp';
         return {
           id: item.id,
           title: item.title,
@@ -322,7 +322,7 @@ export const fetchHighlights = getHighlights;
 export async function saveHighlightToCloud(highlight, oldTitle) {
   let savedHighlight = { ...highlight };
   const rawCover = highlight.cover || highlight.image;
-  const coverUrl = rawCover || '/defecto.webp';
+  const coverUrl = rawCover || '/images/defecto.webp';
 
   savedHighlight.cover = coverUrl;
   savedHighlight.image = coverUrl;
@@ -345,8 +345,8 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
 
       const dataToUpsert = {
         title: highlight.title,
-        cover: coverUrl || '/defecto.webp',
-        image: coverUrl || '/defecto.webp',
+        cover: coverUrl || '/images/defecto.webp',
+        image: coverUrl || '/images/defecto.webp',
         subtitle: highlight.subtitle || 'Destacada',
         is_featured: Boolean(highlight.isFeatured),
       };
@@ -363,8 +363,8 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
           try {
             const fallbackData = {
               title: highlight.title,
-              cover: coverUrl || '/defecto.webp',
-              image: coverUrl || '/defecto.webp',
+              cover: coverUrl || '/images/defecto.webp',
+              image: coverUrl || '/images/defecto.webp',
             };
             if (friendlyId) fallbackData.id = friendlyId;
             res = await supabase.from('highlights').upsert(fallbackData).select();
@@ -432,13 +432,13 @@ export async function createHighlight(newHighlight) {
   const titleInput = typeof newHighlight === 'string' ? newHighlight : (newHighlight?.title || '');
   const subtitleInput = typeof newHighlight === 'object' ? (newHighlight.subtitle || '') : '';
   const rawCover = typeof newHighlight === 'object' ? (newHighlight.cover || newHighlight.image) : null;
-  const coverUrl = rawCover || '/defecto.webp';
+  const coverUrl = rawCover || '/images/defecto.webp';
 
   const payload = {
     title: titleInput.trim(),
     subtitle: subtitleInput ? subtitleInput.trim() : '',
-    cover: coverUrl || '/defecto.webp',
-    image: coverUrl || '/defecto.webp'
+    cover: coverUrl || '/images/defecto.webp',
+    image: coverUrl || '/images/defecto.webp'
   };
 
   let savedHighlight = {
