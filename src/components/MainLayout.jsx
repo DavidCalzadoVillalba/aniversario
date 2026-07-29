@@ -112,11 +112,11 @@ export default function MainLayout() {
 
           {/* Frase emotiva en Playfair Display Itálica */}
           <p className="font-playfair italic text-2xl sm:text-3xl md:text-4xl text-[#312e81] tracking-tight font-semibold leading-snug break-words">
-            "Donde el tiempo se detiene para nosotros"
+            "Por todas las flores del dia para mi niña"
           </p>
 
           <p className="text-xs sm:text-sm text-[#1e1b4b]/60 font-jakarta">
-            Gorditos • Galería Privada de Recuerdos
+            Gorditos
           </p>
         </footer>
       </main>

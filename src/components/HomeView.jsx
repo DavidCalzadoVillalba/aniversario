@@ -66,11 +66,10 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
             >
               {/* Contenedor del Avatar con borde neumórfico */}
               <div
-                className={`relative p-1 rounded-full transition-all duration-300 group-hover:scale-105 ${
-                  story.isFeatured
-                    ? 'p-[3px] bg-gradient-to-tr from-[#312e81] via-[#4338ca] to-[#818cf8] shadow-lg animate-pulse'
-                    : 'silk-convex'
-                }`}
+                className={`relative p-1 rounded-full transition-all duration-300 group-hover:scale-105 ${story.isFeatured
+                  ? 'p-[3px] bg-gradient-to-tr from-[#312e81] via-[#4338ca] to-[#818cf8] shadow-lg animate-pulse'
+                  : 'silk-convex'
+                  }`}
               >
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden p-0.5 bg-[#e0e7ff] border-2 border-white/60">
                   <img
@@ -101,16 +100,15 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
       {/* 2. CUADRÍCULA DE CATEGORÍAS (CATEGORY GRID) */}
       <section aria-label="Cuadrícula de recuerdos" className="w-full">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-          
+
           {/* TARJETA DE VIAJES (GRANDE) - md:col-span-8 */}
           <div
             onClick={() => {
               handleCardClick('travel');
               if (onSelectStory) onSelectStory({ title: 'Viajes', category: 'Viajes' });
             }}
-            className={`md:col-span-8 rounded-3xl overflow-hidden relative group cursor-pointer transition-all duration-300 hover:scale-[1.01] ${
-              activeCard === 'travel' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
-            }`}
+            className={`md:col-span-8 rounded-3xl overflow-hidden relative group cursor-pointer transition-all duration-300 hover:scale-[1.01] ${activeCard === 'travel' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
+              }`}
           >
             <div className="h-72 sm:h-80 md:h-96 w-full relative overflow-hidden">
               <img
@@ -128,7 +126,7 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
                   VIAJES
                 </h3>
                 <p className="text-indigo-100/90 text-sm sm:text-base max-w-lg font-jakarta">
-                  Descubre los destinos inolvidables que hemos recorrido mano a mano.
+                  Descubre los maravillosos viajes juntos (aunque no siempre salgan como esperamos siguen siendo los mejores)
                 </p>
               </div>
             </div>
@@ -140,9 +138,8 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
               handleCardClick('highlights');
               if (onSelectStory) onSelectStory({ title: 'Momentos', category: 'Momentos' });
             }}
-            className={`md:col-span-4 rounded-3xl p-5 sm:p-6 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.01] ${
-              activeCard === 'highlights' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
-            }`}
+            className={`md:col-span-4 rounded-3xl p-5 sm:p-6 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.01] ${activeCard === 'highlights' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
+              }`}
           >
             <div className="space-y-4">
               <div className="h-44 sm:h-48 rounded-2xl overflow-hidden relative shadow-inner">
@@ -161,12 +158,12 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
                   Destacados
                 </span>
                 <h3 className="font-playfair italic text-2xl font-bold text-[#312e81]">
-                  Momentos Puros
+                  Momentos de amor
                 </h3>
               </div>
 
               <p className="text-sm text-[#1e1b4b]/80 leading-relaxed font-jakarta">
-                "Fragmentos de felicidad pura guardados para siempre."
+                "Momentos que estarán guardados para siempre "
               </p>
             </div>
 
@@ -182,9 +179,8 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
               handleCardClick('sparks');
               if (onNavigateToGallery) onNavigateToGallery();
             }}
-            className={`md:col-span-12 rounded-3xl overflow-hidden relative group cursor-pointer transition-all duration-300 hover:scale-[1.01] ${
-              activeCard === 'sparks' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
-            }`}
+            className={`md:col-span-12 rounded-3xl overflow-hidden relative group cursor-pointer transition-all duration-300 hover:scale-[1.01] ${activeCard === 'sparks' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
+              }`}
           >
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-6 sm:p-8">
               {/* Text & Content */}
@@ -195,11 +191,11 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
                 </span>
 
                 <h3 className="font-playfair italic text-2xl sm:text-3xl md:text-4xl font-bold text-[#312e81]">
-                  Nuestras Citas & Recuerdos Inolvidables
+                  Nuestras Citas y Recuerdos Inolvidables
                 </h3>
 
                 <p className="text-sm sm:text-base text-[#1e1b4b]/80 leading-relaxed max-w-2xl font-jakarta">
-                  Cada mirada, cada risa compartida y cada pequeño gesto que encendió la llama de nuestra historia de amor.
+                  Aquí podrás ver cada dia en los que he sido el hombre más feliz del mundo
                 </p>
 
                 <div className="pt-2">
