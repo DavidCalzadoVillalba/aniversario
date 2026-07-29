@@ -277,6 +277,7 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
 
 /**
  * Fetches all highlights from Supabase table 'highlights' or localStorage fallback.
+ * Maps and returns both `image` and `cover` properties to avoid missing column errors.
  */
 export async function fetchHighlightsFromCloud() {
   if (isSupabaseConfigured && supabase) {
@@ -289,13 +290,17 @@ export async function fetchHighlightsFromCloud() {
       if (error) {
         console.warn('Advertencia al consultar Supabase highlights (fallback local):', error.message);
       } else if (Array.isArray(data)) {
-        const formatted = data.map((item) => ({
-          id: item.id,
-          title: item.title,
-          image: item.image,
-          subtitle: item.subtitle || '',
-          isFeatured: Boolean(item.is_featured),
-        }));
+        const formatted = data.map((item) => {
+          const img = item.image || item.cover || '/defecto.webp';
+          return {
+            id: item.id,
+            title: item.title,
+            image: img,
+            cover: img,
+            subtitle: item.subtitle || '',
+            isFeatured: Boolean(item.is_featured),
+          };
+        });
 
         saveHighlights(formatted);
         return formatted;
@@ -305,32 +310,62 @@ export async function fetchHighlightsFromCloud() {
     }
   }
 
-  return getHighlights();
+  const localHighlights = getHighlights();
+  return localHighlights.map((h) => {
+    const img = h.image || h.cover || '/defecto.webp';
+    return {
+      ...h,
+      image: img,
+      cover: img,
+    };
+  });
 }
+
+// Alias for fetchHighlightsFromCloud
+export const fetchHighlights = fetchHighlightsFromCloud;
 
 /**
  * Saves or updates a highlight in Supabase table 'highlights' and localStorage.
+ * Always sends both `image` and `cover` fields with the same URL or '/defecto.webp'.
  */
 export async function saveHighlightToCloud(highlight, oldTitle) {
   let savedHighlight = { ...highlight };
+  const coverUrl = highlight.image || highlight.cover || '/defecto.webp';
+
+  savedHighlight.image = coverUrl;
+  savedHighlight.cover = coverUrl;
 
   if (isSupabaseConfigured && supabase) {
     try {
       const isClientTempId = !highlight.id || String(highlight.id).startsWith('hl_');
 
+      // Generate friendly slug ID if no established ID exists
+      const friendlyId = !isClientTempId && highlight.id
+        ? highlight.id
+        : highlight.title
+          ? highlight.title
+              .toLowerCase()
+              .trim()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '')
+          : undefined;
+
       const dataToUpsert = {
         title: highlight.title,
-        image: highlight.image,
+        image: coverUrl,
+        cover: coverUrl,
         subtitle: highlight.subtitle || 'Destacada',
         is_featured: Boolean(highlight.isFeatured),
       };
 
-      if (!isClientTempId) {
-        dataToUpsert.id = highlight.id;
+      if (friendlyId) {
+        dataToUpsert.id = friendlyId;
       }
 
       let res;
-      if (isClientTempId) {
+      if (isClientTempId && !friendlyId) {
         res = await supabase.from('highlights').insert([dataToUpsert]).select();
       } else {
         res = await supabase.from('highlights').upsert(dataToUpsert).select();
@@ -338,15 +373,35 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
 
       if (res.error) {
         console.warn('Advertencia al guardar destacada en Supabase:', res.error.message);
-      } else if (Array.isArray(res.data) && res.data.length > 0) {
+        // Fallback: try inserting without specifying schema-sensitive image/cover if schema cache fails
+        if (res.error.message?.includes('column')) {
+          try {
+            const fallbackData = {
+              title: highlight.title,
+              subtitle: highlight.subtitle || 'Destacada',
+              is_featured: Boolean(highlight.isFeatured),
+            };
+            if (friendlyId) fallbackData.id = friendlyId;
+            res = await supabase.from('highlights').upsert(fallbackData).select();
+          } catch (e) {
+            console.error('Fallback upsert error:', e);
+          }
+        }
+      }
+
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
         const cloudRecord = res.data[0];
+        const recordImg = cloudRecord.image || cloudRecord.cover || coverUrl;
         savedHighlight = {
-          id: cloudRecord.id,
-          title: cloudRecord.title,
-          image: cloudRecord.image,
-          subtitle: cloudRecord.subtitle || '',
+          id: cloudRecord.id || friendlyId || savedHighlight.id,
+          title: cloudRecord.title || savedHighlight.title,
+          image: recordImg,
+          cover: recordImg,
+          subtitle: cloudRecord.subtitle || savedHighlight.subtitle,
           isFeatured: Boolean(cloudRecord.is_featured),
         };
+      } else if (friendlyId) {
+        savedHighlight.id = friendlyId;
       }
 
       // If title changed, update memories in Supabase that had the old category title
@@ -384,6 +439,36 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
   window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
 
   return savedHighlight;
+}
+
+/**
+ * Creates a new highlight in Supabase and localStorage.
+ * Generates a friendly text ID in lowercase without accents or spaces,
+ * assigning default cover '/defecto.webp' if no image provided.
+ */
+export async function createHighlight(newHighlight) {
+  const title = newHighlight.title ? newHighlight.title.trim() : '';
+  const friendlyId = newHighlight.id || (title
+    ? title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+    : undefined);
+
+  const coverUrl = newHighlight.image || newHighlight.cover || '/defecto.webp';
+
+  const itemToSave = {
+    ...newHighlight,
+    id: friendlyId,
+    title: title,
+    image: coverUrl,
+    cover: coverUrl,
+    subtitle: newHighlight.subtitle ? newHighlight.subtitle.trim() : 'Destacada',
+  };
+
+  return await saveHighlightToCloud(itemToSave);
 }
 
 /**
@@ -469,3 +554,4 @@ export const subscribeToRealtimeSync = (onMemoriesChange, onHighlightsChange) =>
     return null;
   }
 };
+

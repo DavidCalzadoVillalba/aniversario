@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Pencil, Trash2, ImagePlus, Sparkles, CheckCircle2 } from 'lucide-react';
-import { fetchHighlightsFromCloud, saveHighlightToCloud, deleteHighlightFromCloud, uploadImageToSupabase } from '../utils/supabaseService';
+import { fetchHighlights, createHighlight, saveHighlightToCloud, deleteHighlightFromCloud, uploadImageToSupabase } from '../utils/supabaseService';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function HighlightsManagerModal({ onClose }) {
@@ -18,7 +18,7 @@ export default function HighlightsManagerModal({ onClose }) {
   const fileInputRef = useRef(null);
 
   const loadData = async () => {
-    const list = await fetchHighlightsFromCloud();
+    const list = await fetchHighlights();
     setHighlights(list);
   };
 
@@ -69,7 +69,7 @@ export default function HighlightsManagerModal({ onClose }) {
     setEditingId(item.id);
     setTitle(item.title);
     setSubtitle(item.subtitle || '');
-    setCoverImage(item.image || '/images/defecto.webp');
+    setCoverImage(item.image || item.cover || '/defecto.webp');
     setErrorMsg(null);
   };
 
@@ -93,21 +93,27 @@ export default function HighlightsManagerModal({ onClose }) {
     }
 
     if (!finalImage || finalImage.trim() === '') {
-      finalImage = '/images/defecto.webp';
+      finalImage = '/defecto.webp';
     }
 
     const editingItem = highlights.find((h) => h.id === editingId);
     const oldTitle = editingItem ? editingItem.title : null;
 
     const item = {
-      id: editingId || ('hl_' + Date.now()),
+      id: editingId || undefined,
       title: title.trim(),
       subtitle: subtitle.trim() || 'Destacada',
       image: finalImage,
+      cover: finalImage,
       isFeatured: editingId ? (editingItem?.isFeatured || false) : highlights.length === 0,
     };
 
-    await saveHighlightToCloud(item, oldTitle);
+    if (editingId) {
+      await saveHighlightToCloud(item, oldTitle);
+    } else {
+      await createHighlight(item);
+    }
+
     await loadData();
 
     setToastMsg(editingId ? '¡Historia destacada actualizada!' : '¡Nueva historia destacada creada!');

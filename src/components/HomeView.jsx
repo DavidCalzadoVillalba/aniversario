@@ -8,7 +8,24 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
 
   const loadStoriesData = async () => {
     const list = await fetchHighlightsFromCloud();
-    setStories(list);
+
+    // Ensure highlight 'Momentos de amor' with id 'momentos' is present in carousel
+    const tieneMomentos = Array.isArray(list) && list.some(
+      (h) => h.id === 'momentos' || (h.title && (h.title.toLowerCase().trim() === 'momentos de amor' || h.title.toLowerCase().trim() === 'momentos'))
+    );
+
+    let fullStories = Array.isArray(list) ? [...list] : [];
+    if (!tieneMomentos) {
+      fullStories.push({
+        id: 'momentos',
+        title: 'Momentos de amor',
+        image: '/images/momentospuros.webp',
+        cover: '/images/momentospuros.webp',
+        subtitle: 'Fotos espontáneas',
+        isFeatured: false,
+      });
+    }
+    setStories(fullStories);
   };
 
   useEffect(() => {
@@ -73,10 +90,10 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
               >
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden p-0.5 bg-[#e0e7ff] border-2 border-white/60">
                   <img
-                    src={story.image || '/images/defecto.webp'}
+                    src={story.image || story.cover || '/defecto.webp'}
                     alt={story.title}
                     onError={(e) => {
-                      e.currentTarget.src = '/images/defecto.webp';
+                      e.currentTarget.src = '/defecto.webp';
                     }}
                     className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
                   />
@@ -136,7 +153,7 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
           <div
             onClick={() => {
               handleCardClick('highlights');
-              if (onSelectStory) onSelectStory({ title: 'Momentos', category: 'Momentos' });
+              if (onSelectStory) onSelectStory({ id: 'momentos', title: 'Momentos de amor', category: 'Momentos de amor' });
             }}
             className={`md:col-span-4 rounded-3xl p-5 sm:p-6 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.01] ${activeCard === 'highlights' ? 'silk-concave neo-pressed' : 'silk-convex neo-extruded'
               }`}

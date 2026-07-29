@@ -27,8 +27,9 @@ export default function StoryViewer({ initialStory, allMemories = [], onClose, o
         const targetIndex = allMemories.findIndex((m) => m.id === initialStory.id);
         setCurrentIndex(targetIndex !== -1 ? targetIndex : 0);
       } else {
-        // Opened from Highlight Circle / Category Card: Filter strictly by category title
-        const targetTag = initialStory?.title || initialStory?.category || '';
+        // Opened from Highlight Circle / Category Card: Filter strictly by category title or ID
+        const targetTag = (initialStory?.title || initialStory?.category || initialStory?.id || '').toLowerCase().trim();
+        const isMomentoTag = targetTag.includes('momento') || initialStory?.id === 'momentos';
 
         if (targetTag) {
           filteredList = allMemories.filter((m) => {
@@ -38,9 +39,14 @@ export default function StoryViewer({ initialStory, allMemories = [], onClose, o
               ? [m.category]
               : [];
 
-            return memoryCats.some(
-              (c) => c.toLowerCase().trim() === targetTag.toLowerCase().trim()
-            );
+            return memoryCats.some((c) => {
+              if (!c) return false;
+              const catLower = c.toLowerCase().trim();
+              if (isMomentoTag) {
+                return catLower === 'momentos' || catLower === 'momentos de amor' || catLower.includes('momento');
+              }
+              return catLower === targetTag;
+            });
           });
         }
         setCurrentIndex(0);

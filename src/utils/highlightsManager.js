@@ -35,9 +35,10 @@ export const DEFAULT_HIGHLIGHTS = [
     isFeatured: false,
   },
   {
-    id: 'hl_5',
-    title: 'Momentos',
-    image: '/images/story_nuestra_historia.png',
+    id: 'momentos',
+    title: 'Momentos de amor',
+    image: '/images/momentospuros.webp',
+    cover: '/images/momentospuros.webp',
     subtitle: 'Fotos espontáneas',
     isFeatured: false,
   },
