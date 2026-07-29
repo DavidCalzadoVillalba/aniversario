@@ -210,10 +210,10 @@ export default function HighlightsManagerModal({ onClose }) {
                 title="Seleccionar portada"
               >
                 <img
-                  src={coverImage || '/images/defecto.webp'}
+                  src={coverImage || '/defecto.webp'}
                   alt="Portada"
                   onError={(e) => {
-                    e.currentTarget.src = '/images/defecto.webp';
+                    e.target.src = '/defecto.webp';
                   }}
                   className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform"
                 />
@@ -270,22 +270,24 @@ export default function HighlightsManagerModal({ onClose }) {
           </h3>
 
           <div className="space-y-2.5 max-h-56 overflow-y-auto no-scrollbar pr-1 w-full">
-            {highlights.map((item) => (
-              <div
-                key={item.id}
-                className="silk-convex rounded-2xl p-3 flex items-center justify-between space-x-3 transition-all hover:scale-[1.005] w-full"
-              >
-                <div className="flex items-center space-x-3 truncate">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 silk-convex shrink-0 border border-white/60">
-                    <img
-                      src={item.image || '/images/defecto.webp'}
-                      alt={item.title}
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/defecto.webp';
-                      }}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
+            {highlights.map((item) => {
+              const coverImage = item.cover || item.image || '/defecto.webp';
+              return (
+                <div
+                  key={item.id}
+                  className="silk-convex rounded-2xl p-3 flex items-center justify-between space-x-3 transition-all hover:scale-[1.005] w-full"
+                >
+                  <div className="flex items-center space-x-3 truncate">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 silk-convex shrink-0 border border-white/60">
+                      <img
+                        src={coverImage}
+                        alt={item.title}
+                        onError={(e) => {
+                          e.target.src = '/defecto.webp';
+                        }}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
 
                   <div className="truncate">
                     <h4 className="font-playfair italic text-sm sm:text-base font-bold text-[#312e81] truncate">
@@ -316,7 +318,8 @@ export default function HighlightsManagerModal({ onClose }) {
                   </button>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
 

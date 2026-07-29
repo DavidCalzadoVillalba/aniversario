@@ -75,42 +75,45 @@ export default function HomeView({ onSelectStory, onNavigateToGallery, onOpenHig
 
         {/* Scroll Horizontal Limpio sin barra de desplazamiento */}
         <div className="flex items-center space-x-5 overflow-x-auto no-scrollbar py-3 px-1">
-          {stories.map((story) => (
-            <button
-              key={story.id}
-              onClick={() => onSelectStory && onSelectStory(story)}
-              className="flex flex-col items-center space-y-2 group shrink-0 focus:outline-none cursor-pointer"
-            >
-              {/* Contenedor del Avatar con borde neumórfico */}
-              <div
-                className={`relative p-1 rounded-full transition-all duration-300 group-hover:scale-105 ${story.isFeatured
-                  ? 'p-[3px] bg-gradient-to-tr from-[#312e81] via-[#4338ca] to-[#818cf8] shadow-lg animate-pulse'
-                  : 'silk-convex'
-                  }`}
+          {stories.map((story) => {
+            const coverImage = story.cover || story.image || '/defecto.webp';
+            return (
+              <button
+                key={story.id}
+                onClick={() => onSelectStory && onSelectStory(story)}
+                className="flex flex-col items-center space-y-2 group shrink-0 focus:outline-none cursor-pointer"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden p-0.5 bg-[#e0e7ff] border-2 border-white/60">
-                  <img
-                    src={story.image || story.cover || '/defecto.webp'}
-                    alt={story.title}
-                    onError={(e) => {
-                      e.currentTarget.src = '/defecto.webp';
-                    }}
-                    className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
-                  />
+                {/* Contenedor del Avatar con borde neumórfico */}
+                <div
+                  className={`relative p-1 rounded-full transition-all duration-300 group-hover:scale-105 ${story.isFeatured
+                    ? 'p-[3px] bg-gradient-to-tr from-[#312e81] via-[#4338ca] to-[#818cf8] shadow-lg animate-pulse'
+                    : 'silk-convex'
+                    }`}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden p-0.5 bg-[#e0e7ff] border-2 border-white/60">
+                    <img
+                      src={coverImage}
+                      alt={story.title}
+                      onError={(e) => {
+                        e.target.src = '/defecto.webp';
+                      }}
+                      className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                  {story.isFeatured && (
+                    <span className="absolute -bottom-1 -right-1 bg-[#4338ca] text-white p-1 rounded-full shadow-md">
+                      <Sparkles className="w-3 h-3 animate-spin" style={{ animationDuration: '4s' }} />
+                    </span>
+                  )}
                 </div>
-                {story.isFeatured && (
-                  <span className="absolute -bottom-1 -right-1 bg-[#4338ca] text-white p-1 rounded-full shadow-md">
-                    <Sparkles className="w-3 h-3 animate-spin" style={{ animationDuration: '4s' }} />
-                  </span>
-                )}
-              </div>
 
-              {/* Título de la Historia */}
-              <span className="text-xs sm:text-sm font-medium text-[#1e1b4b] group-hover:text-[#4338ca] transition-colors font-jakarta tracking-tight">
-                {story.title}
-              </span>
-            </button>
-          ))}
+                {/* Título de la Historia */}
+                <span className="text-xs sm:text-sm font-medium text-[#1e1b4b] group-hover:text-[#4338ca] transition-colors font-jakarta tracking-tight">
+                  {story.title}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 

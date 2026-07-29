@@ -435,35 +435,55 @@ export async function saveHighlightToCloud(highlight, oldTitle) {
 
 /**
  * Creates a new highlight in Supabase and localStorage.
- * Inserts valid object: { title, cover, image } with fallback '/defecto.webp'.
+ * Inserts payload omitting the `id` property so Postgres auto-generates the primary key.
  */
 export async function createHighlight(newHighlight) {
   const titleInput = typeof newHighlight === 'string' ? newHighlight : (newHighlight?.title || '');
+  const subtitleInput = typeof newHighlight === 'object' ? (newHighlight.subtitle || '') : '';
   const rawCover = typeof newHighlight === 'object' ? (newHighlight.cover || newHighlight.image) : null;
   const coverUrl = rawCover || '/defecto.webp';
 
-  const friendlyId = typeof newHighlight === 'object' && newHighlight.id
-    ? newHighlight.id
-    : titleInput
-      ? titleInput
-          .toLowerCase()
-          .trim()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '')
-      : undefined;
-
   const payload = {
-    id: friendlyId,
     title: titleInput.trim(),
+    subtitle: subtitleInput ? subtitleInput.trim() : '',
     cover: coverUrl || '/defecto.webp',
     image: coverUrl || '/defecto.webp',
-    subtitle: (typeof newHighlight === 'object' && newHighlight.subtitle) ? newHighlight.subtitle.trim() : 'Destacada',
-    isFeatured: typeof newHighlight === 'object' ? Boolean(newHighlight.isFeatured) : false,
   };
 
-  return await saveHighlightToCloud(payload);
+  let savedHighlight = {
+    ...payload,
+    id: 'hl_' + Date.now(),
+    isFeatured: false,
+  };
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase.from('highlights').insert([payload]).select();
+
+      if (error) {
+        console.warn('Advertencia al insertar destacada en Supabase:', error.message);
+      } else if (Array.isArray(data) && data.length > 0) {
+        const cloudRecord = data[0];
+        const recordImg = cloudRecord.cover || cloudRecord.image || coverUrl;
+        savedHighlight = {
+          id: cloudRecord.id,
+          title: cloudRecord.title,
+          subtitle: cloudRecord.subtitle || '',
+          cover: recordImg,
+          image: recordImg,
+          isFeatured: Boolean(cloudRecord.is_featured),
+        };
+      }
+    } catch (err) {
+      console.error('Error al crear destacada en Supabase:', err);
+    }
+  }
+
+  const current = getHighlights();
+  saveHighlights([savedHighlight, ...current]);
+  window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
+
+  return savedHighlight;
 }
 
 /**
