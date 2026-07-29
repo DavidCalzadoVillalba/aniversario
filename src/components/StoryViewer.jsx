@@ -180,21 +180,28 @@ export default function StoryViewer({ initialStory, allMemories = [], onClose, o
   return (
     <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center select-none animate-fadeIn">
       {/* Container simulating mobile story phone viewport with 100dvh */}
-      <div className="relative w-full max-w-md h-full h-[100dvh] md:h-[92vh] md:max-h-[850px] md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between bg-[#1e1b4b]">
+      <div className="relative w-full max-w-md h-[100dvh] md:h-[92vh] md:max-h-[850px] md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between bg-[#1e1b4b]">
         
-        {/* BACKGROUND HIGH-RES IMAGE */}
-        <div className="absolute inset-0 z-0">
+        {/* BACKGROUND BLURRED FILLER & MAIN RESIZABLE STORY IMAGE */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+          {/* Blurred filler background image so container edges look seamless */}
+          <img
+            src={currentStory.image}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-30 transition-all duration-500"
+          />
+          {/* Main Story Image (object-contain to avoid cropping/distortion) */}
           <img
             src={currentStory.image}
             alt={currentStory.title}
-            className="w-full h-full object-cover transition-all duration-500"
+            className="max-h-full w-auto max-w-full object-contain mx-auto my-auto relative z-0 transition-all duration-500"
           />
           {/* Dark Overlay Gradient */}
-          <div className="absolute inset-0 story-gradient z-10" />
+          <div className="absolute inset-0 story-gradient z-0 pointer-events-none" />
         </div>
 
         {/* TOP CONTROLS & PROGRESS BARS WITH MOBILE SAFE TOP PADDING */}
-        <div className="relative z-30 pt-safe pt-4 px-4 space-y-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+        <div className="relative z-10 pt-[max(1rem,env(safe-area-inset-top))] px-4 pb-4 space-y-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
           {/* Progress Segmented Bar */}
           <div className="flex items-center space-x-1.5 w-full">
             {activeStories.map((_, idx) => {
@@ -251,7 +258,7 @@ export default function StoryViewer({ initialStory, allMemories = [], onClose, o
 
         {/* CLICK TOUCH NAVIGATION ZONES (Left 30% / Right 70%) */}
         <div
-          className="absolute inset-0 z-20 flex"
+          className="absolute inset-0 z-0 flex"
           onMouseDown={() => setIsPaused(true)}
           onMouseUp={() => setIsPaused(false)}
           onTouchStart={() => setIsPaused(true)}
@@ -285,7 +292,7 @@ export default function StoryViewer({ initialStory, allMemories = [], onClose, o
         </div>
 
         {/* BOTTOM EMOTIONAL CONTENT OVERLAY WITH MOBILE SAFE BOTTOM PADDING */}
-        <div className="relative z-30 pb-safe p-5 sm:p-6 space-y-4 text-white">
+        <div className="relative z-10 pb-[max(1.25rem,env(safe-area-inset-bottom))] p-5 sm:p-6 space-y-4 text-white bg-gradient-to-t from-black/90 via-black/50 to-transparent">
           
           {/* Toast feedback */}
           {toastFeedback && (

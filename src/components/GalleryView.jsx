@@ -343,8 +343,8 @@ export default function GalleryView({ onNavigateToUpload, onSelectMemory, onModa
 
       {/* FLOATING ACTION BAR FOR MULTIPLE SELECTION */}
       {isSelectionMode && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md animate-fadeIn">
-          <div className="silk-convex rounded-3xl p-3 sm:p-4 flex items-center justify-between shadow-2xl backdrop-blur-md bg-[#e0e7ff]/95 border border-white/60">
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-fadeIn pointer-events-none">
+          <div className="silk-convex rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 w-full max-w-md mx-auto shadow-2xl backdrop-blur-md bg-[#e0e7ff]/95 border border-white/60 pointer-events-auto">
             <div className="flex items-center space-x-1.5 text-[#312e81] font-semibold text-xs sm:text-sm font-jakarta px-1">
               <CheckSquare className="w-4 h-4 text-[#4338ca]" />
               <span>
@@ -352,7 +352,7 @@ export default function GalleryView({ onNavigateToUpload, onSelectMemory, onModa
               </span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
               <button
                 type="button"
                 onClick={handleSelectAll}
@@ -381,7 +381,7 @@ export default function GalleryView({ onNavigateToUpload, onSelectMemory, onModa
                 className="silk-button-primary px-3 py-1.5 rounded-xl font-bold text-xs font-jakarta flex items-center space-x-1 disabled:opacity-40 cursor-pointer shadow-md bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Eliminar</span>
+                <span>Eliminar seleccionadas</span>
               </button>
             </div>
           </div>
