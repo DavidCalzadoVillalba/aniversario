@@ -276,24 +276,17 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
 }
 
 /**
- * Fetches all highlights from Supabase table 'highlights' or localStorage fallback.
- * Performs query: const { data, error } = await supabase.from('highlights').select('*');
+ * Fetches highlights from Supabase or returns default highlight.
  */
-export async function getHighlights() {
+export const getHighlights = async () => {
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('highlights').select('*');
-
       if (error) {
-        console.warn('Advertencia al consultar Supabase highlights:', error.message);
-        const localHighlights = getLocalHighlights() || [];
-        return localHighlights.map((h) => {
-          const coverUrl = h.cover || h.image || '/defecto.webp';
-          return { ...h, cover: coverUrl, image: coverUrl };
-        });
+        console.warn('No se pudo cargar highlights de Supabase:', error.message);
+        return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
       }
-
-      if (Array.isArray(data)) {
+      if (data && data.length > 0) {
         const formatted = data.map((item) => {
           const coverUrl = item.cover || item.image || '/defecto.webp';
           return {
@@ -305,25 +298,18 @@ export async function getHighlights() {
             isFeatured: Boolean(item.is_featured),
           };
         });
-
         saveHighlights(formatted);
         return formatted;
       }
+      return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
     } catch (err) {
-      console.warn('Error al consultar Supabase highlights:', err);
+      console.warn('Error en la consulta getHighlights:', err);
+      return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
     }
   }
 
-  const localHighlights = getLocalHighlights() || [];
-  return localHighlights.map((h) => {
-    const coverUrl = h.cover || h.image || '/defecto.webp';
-    return {
-      ...h,
-      cover: coverUrl,
-      image: coverUrl,
-    };
-  });
-}
+  return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
+};
 
 // Aliases for getHighlights
 export const fetchHighlightsFromCloud = getHighlights;
