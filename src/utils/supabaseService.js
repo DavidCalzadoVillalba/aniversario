@@ -276,39 +276,39 @@ export async function updateMemoryCategoriesInCloud(targetIds, categories) {
 }
 
 /**
- * Fetches highlights from Supabase or returns default highlight.
+ * Fetches highlights from Supabase or returns a safe fallback array.
  */
 export const getHighlights = async () => {
+  const fallbackList = [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp', subtitle: 'Nuestros recuerdos' }];
+
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from('highlights').select('*');
-      if (error) {
-        console.warn('No se pudo cargar highlights de Supabase:', error.message);
-        return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
+      if (error || !data || data.length === 0) {
+        if (error) console.warn('No se pudo cargar highlights de Supabase:', error.message);
+        return fallbackList;
       }
-      if (data && data.length > 0) {
-        const formatted = data.map((item) => {
-          const coverUrl = item.cover || item.image || '/defecto.webp';
-          return {
-            id: item.id,
-            title: item.title,
-            cover: coverUrl,
-            image: coverUrl,
-            subtitle: item.subtitle || '',
-            isFeatured: Boolean(item.is_featured),
-          };
-        });
-        saveHighlights(formatted);
-        return formatted;
-      }
-      return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
+
+      const formatted = data.map((item) => {
+        const coverUrl = item.cover || item.image || '/defecto.webp';
+        return {
+          id: item.id,
+          title: item.title,
+          cover: coverUrl,
+          image: coverUrl,
+          subtitle: item.subtitle || 'Nuestros recuerdos',
+          isFeatured: Boolean(item.is_featured),
+        };
+      });
+      saveHighlights(formatted);
+      return formatted;
     } catch (err) {
       console.warn('Error en la consulta getHighlights:', err);
-      return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
+      return fallbackList;
     }
   }
 
-  return [{ id: 'momentos', title: 'Momentos de amor', cover: '/defecto.webp', image: '/defecto.webp' }];
+  return fallbackList;
 };
 
 // Aliases for getHighlights
