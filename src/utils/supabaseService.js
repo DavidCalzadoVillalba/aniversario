@@ -454,12 +454,14 @@ export async function createHighlight(newHighlight) {
     try {
       const { data, error } = await supabase
         .from('highlights')
-        .insert([{
-          title: titleInput.trim(),
-          subtitle: subtitleInput ? subtitleInput.trim() : '',
-          cover: coverUrl || '/defecto.webp',
-          image: coverUrl || '/defecto.webp'
-        }])
+        .insert([
+          {
+            title: titleInput.trim(),
+            subtitle: subtitleInput ? subtitleInput.trim() : '',
+            cover: coverUrl || '/defecto.webp',
+            image: coverUrl || '/defecto.webp'
+          }
+        ])
         .select();
 
       if (error) {
@@ -484,6 +486,9 @@ export async function createHighlight(newHighlight) {
   const current = getLocalHighlights();
   saveHighlights([savedHighlight, ...current]);
   window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
+
+  // Immediately call fetchHighlights to refresh state
+  await fetchHighlights();
 
   return savedHighlight;
 }
