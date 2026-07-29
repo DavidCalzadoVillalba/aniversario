@@ -159,42 +159,49 @@ export function updateHighlight(id, updatedData) {
  * Photos are NOT deleted; instead, this highlight title is removed from the `categories` array of associated photos.
  * @param {string} id 
  */
-export function deleteHighlight(id) {
+/**
+ * Deletes a highlight by ID or Title.
+ * CRITICAL RULE: Removes ONLY the highlight definition from localStorage.
+ * Photos are NOT deleted; instead, this highlight title is removed from the `categories` array of associated photos.
+ * @param {string} id 
+ * @param {string} targetTitle
+ */
+export function deleteHighlight(id, targetTitle) {
   const current = getHighlights();
-  const target = current.find((h) => h.id === id);
-  if (!target) return current;
+  const target = current.find((h) => h.id === id || (targetTitle && h.title === targetTitle));
+  const titleToRemove = targetTitle || target?.title;
 
-  const targetTitle = target.title;
-  const updatedHighlights = current.filter((h) => h.id !== id);
+  const updatedHighlights = current.filter((h) => h.id !== id && (!targetTitle || h.title !== targetTitle));
 
   // If the erased item was featured, make the first item featured
-  if (target.isFeatured && updatedHighlights.length > 0) {
+  if (target?.isFeatured && updatedHighlights.length > 0) {
     updatedHighlights[0].isFeatured = true;
   }
 
   saveHighlights(updatedHighlights);
 
   // Remove the category string from memories without deleting photos
-  try {
-    const storedMemories = localStorage.getItem(MEMORIES_STORAGE_KEY);
-    if (storedMemories) {
-      const memories = JSON.parse(storedMemories);
-      if (Array.isArray(memories)) {
-        const updatedMemories = memories.map((m) => {
-          let cats = Array.isArray(m.categories) ? m.categories : (m.category ? [m.category] : []);
-          cats = cats.filter((c) => c !== targetTitle);
-          return {
-            ...m,
-            categories: cats,
-            category: cats[0] || '',
-          };
-        });
-        localStorage.setItem(MEMORIES_STORAGE_KEY, JSON.stringify(updatedMemories));
-        window.dispatchEvent(new CustomEvent('eternal_muse_memory_added'));
+  if (titleToRemove) {
+    try {
+      const storedMemories = localStorage.getItem(MEMORIES_STORAGE_KEY);
+      if (storedMemories) {
+        const memories = JSON.parse(storedMemories);
+        if (Array.isArray(memories)) {
+          const updatedMemories = memories.map((m) => {
+            let cats = Array.isArray(m.categories) ? [...m.categories] : (m.category ? [m.category] : []);
+            cats = cats.filter((c) => c !== titleToRemove);
+            return {
+              ...m,
+              categories: cats,
+              category: cats[0] || '',
+            };
+          });
+          localStorage.setItem(MEMORIES_STORAGE_KEY, JSON.stringify(updatedMemories));
+        }
       }
+    } catch (e) {
+      console.error('Error al remover categoría eliminada de los recuerdos:', e);
     }
-  } catch (e) {
-    console.error('Error al remover categoría eliminada de los recuerdos:', e);
   }
 
   return updatedHighlights;

@@ -19,9 +19,14 @@ export default function GalleryView({ onNavigateToUpload, onSelectMemory, onModa
 
   useEffect(() => {
     if (onModalStateChange) {
-      onModalStateChange(Boolean(localActiveMemory || assigningTargetMemories));
+      onModalStateChange(Boolean(localActiveMemory || assigningTargetMemories || isSelectionMode));
     }
-  }, [localActiveMemory, assigningTargetMemories, onModalStateChange]);
+    return () => {
+      if (onModalStateChange) {
+        onModalStateChange(false);
+      }
+    };
+  }, [localActiveMemory, assigningTargetMemories, isSelectionMode, onModalStateChange]);
 
   // Load dynamic category filter tabs
   const loadCategories = async () => {

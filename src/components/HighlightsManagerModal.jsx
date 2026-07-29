@@ -24,6 +24,11 @@ export default function HighlightsManagerModal({ onClose }) {
 
   useEffect(() => {
     loadData();
+    const handleHighlightsUpdated = () => loadData();
+    window.addEventListener('gorditos_highlights_updated', handleHighlightsUpdated);
+    return () => {
+      window.removeEventListener('gorditos_highlights_updated', handleHighlightsUpdated);
+    };
   }, []);
 
   // Helper to handle cover image processing
@@ -91,15 +96,18 @@ export default function HighlightsManagerModal({ onClose }) {
       finalImage = '/images/defecto.webp';
     }
 
+    const editingItem = highlights.find((h) => h.id === editingId);
+    const oldTitle = editingItem ? editingItem.title : null;
+
     const item = {
       id: editingId || ('hl_' + Date.now()),
       title: title.trim(),
       subtitle: subtitle.trim() || 'Destacada',
       image: finalImage,
-      isFeatured: editingId ? (highlights.find((h) => h.id === editingId)?.isFeatured || false) : highlights.length === 0,
+      isFeatured: editingId ? (editingItem?.isFeatured || false) : highlights.length === 0,
     };
 
-    await saveHighlightToCloud(item);
+    await saveHighlightToCloud(item, oldTitle);
     await loadData();
 
     setToastMsg(editingId ? '¡Historia destacada actualizada!' : '¡Nueva historia destacada creada!');
@@ -114,7 +122,7 @@ export default function HighlightsManagerModal({ onClose }) {
         `¿Eliminar la historia "${highlightTitle}"? Sus fotos NO se borrarán de la Galería, únicamente se removerá la etiqueta de esta destacada.`
       )
     ) {
-      await deleteHighlightFromCloud(id);
+      await deleteHighlightFromCloud(id, highlightTitle);
       await loadData();
       if (editingId === id) resetForm();
       setToastMsg('¡Historia destacada eliminada!');

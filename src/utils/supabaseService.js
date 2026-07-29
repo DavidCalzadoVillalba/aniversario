@@ -288,7 +288,7 @@ export async function fetchHighlightsFromCloud() {
 
       if (error) {
         console.warn('Advertencia al consultar Supabase highlights (fallback local):', error.message);
-      } else if (Array.isArray(data) && data.length > 0) {
+      } else if (Array.isArray(data)) {
         const formatted = data.map((item) => ({
           id: item.id,
           title: item.title,
@@ -309,59 +309,136 @@ export async function fetchHighlightsFromCloud() {
 }
 
 /**
- * Saves or updates a highlight in Supabase and localStorage.
+ * Saves or updates a highlight in Supabase table 'highlights' and localStorage.
  */
-export async function saveHighlightToCloud(highlight) {
-  const current = getHighlights();
-  const updated = [...current.filter((h) => h.id !== highlight.id), highlight];
-  saveHighlights(updated);
+export async function saveHighlightToCloud(highlight, oldTitle) {
+  let savedHighlight = { ...highlight };
 
   if (isSupabaseConfigured && supabase) {
     try {
       const isClientTempId = !highlight.id || String(highlight.id).startsWith('hl_');
 
-      const dataToInsert = {
+      const dataToUpsert = {
         title: highlight.title,
         image: highlight.image,
-        subtitle: highlight.subtitle,
-        is_featured: highlight.isFeatured,
+        subtitle: highlight.subtitle || 'Destacada',
+        is_featured: Boolean(highlight.isFeatured),
       };
 
       if (!isClientTempId) {
-        dataToInsert.id = highlight.id;
+        dataToUpsert.id = highlight.id;
       }
 
+      let res;
       if (isClientTempId) {
-        await supabase.from('highlights').insert([dataToInsert]).select();
+        res = await supabase.from('highlights').insert([dataToUpsert]).select();
       } else {
-        await supabase.from('highlights').upsert(dataToInsert).select();
+        res = await supabase.from('highlights').upsert(dataToUpsert).select();
+      }
+
+      if (res.error) {
+        console.warn('Advertencia al guardar destacada en Supabase:', res.error.message);
+      } else if (Array.isArray(res.data) && res.data.length > 0) {
+        const cloudRecord = res.data[0];
+        savedHighlight = {
+          id: cloudRecord.id,
+          title: cloudRecord.title,
+          image: cloudRecord.image,
+          subtitle: cloudRecord.subtitle || '',
+          isFeatured: Boolean(cloudRecord.is_featured),
+        };
+      }
+
+      // If title changed, update memories in Supabase that had the old category title
+      if (oldTitle && oldTitle !== highlight.title) {
+        const { data: memories } = await supabase.from('memories').select('*');
+        if (Array.isArray(memories)) {
+          for (const m of memories) {
+            let cats = Array.isArray(m.categories)
+              ? [...m.categories]
+              : m.category
+              ? [m.category]
+              : [];
+            if (cats.includes(oldTitle)) {
+              const updatedCats = cats.map((c) => (c === oldTitle ? highlight.title : c));
+              await supabase
+                .from('memories')
+                .update({
+                  categories: updatedCats,
+                  category: updatedCats[0] || '',
+                })
+                .eq('id', m.id);
+            }
+          }
+        }
       }
     } catch (err) {
       console.error('Error al guardar destacada en Supabase:', err);
     }
   }
+
+  // Update localStorage cache and dispatch event
+  const current = getHighlights();
+  const filtered = current.filter((h) => h.id !== highlight.id && h.id !== savedHighlight.id);
+  saveHighlights([savedHighlight, ...filtered]);
+  window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
+
+  return savedHighlight;
 }
 
 /**
- * Deletes a highlight from Supabase and localStorage.
+ * Deletes a highlight from Supabase table 'highlights' and localStorage,
+ * and removes its tag from memories in Supabase without deleting photo rows.
  */
-export async function deleteHighlightFromCloud(id) {
-  const current = getHighlights();
-  const updated = current.filter((h) => h.id !== id);
-  saveHighlights(updated);
-
+export async function deleteHighlightFromCloud(id, targetTitle) {
   if (isSupabaseConfigured && supabase) {
     try {
-      await supabase.from('highlights').delete().eq('id', id);
+      // 1. Delete highlight row directly from Supabase highlights table
+      if (id && !String(id).startsWith('hl_')) {
+        await supabase.from('highlights').delete().eq('id', id);
+      }
+      if (targetTitle) {
+        await supabase.from('highlights').delete().eq('title', targetTitle);
+      }
+
+      // 2. Remove category string from memories in Supabase without deleting photo rows
+      if (targetTitle) {
+        const { data: memories, error } = await supabase.from('memories').select('*');
+        if (!error && Array.isArray(memories)) {
+          for (const m of memories) {
+            let cats = Array.isArray(m.categories)
+              ? [...m.categories]
+              : m.category
+              ? [m.category]
+              : [];
+
+            if (cats.includes(targetTitle)) {
+              const updatedCats = cats.filter((c) => c !== targetTitle);
+              await supabase
+                .from('memories')
+                .update({
+                  categories: updatedCats,
+                  category: updatedCats[0] || '',
+                })
+                .eq('id', m.id);
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Error al eliminar destacada de Supabase:', err);
     }
   }
+
+  // 3. Update localStorage cache and dispatch global events
+  deleteHighlight(id, targetTitle);
+  window.dispatchEvent(new CustomEvent('gorditos_highlights_updated'));
+  window.dispatchEvent(new CustomEvent('eternal_muse_memory_added'));
 }
 
 /**
  * Subscribes to Supabase Realtime changes for instant multi-device sync.
- * Creates channel, attaches .on() listeners, calls .subscribe() and returns channel.
+ * Creates channel, attaches .on() listeners for 'highlights' and 'memories', calls .subscribe() and returns channel.
  */
 export const subscribeToRealtimeSync = (onMemoriesChange, onHighlightsChange) => {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -372,16 +449,16 @@ export const subscribeToRealtimeSync = (onMemoriesChange, onHighlightsChange) =>
     channel
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'memories' },
+        { event: '*', schema: 'public', table: 'highlights' },
         (payload) => {
-          if (onMemoriesChange) onMemoriesChange(payload);
+          if (onHighlightsChange) onHighlightsChange(payload);
         }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'highlights' },
+        { event: '*', schema: 'public', table: 'memories' },
         (payload) => {
-          if (onHighlightsChange) onHighlightsChange(payload);
+          if (onMemoriesChange) onMemoriesChange(payload);
         }
       )
       .subscribe();
